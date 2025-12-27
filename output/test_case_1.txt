@@ -1,0 +1,16 @@
+1.TEST CASE NAME : TestCase
+2.NOTE
+TEST CASE START : 주유소
+{"주유소":[
+  {"caseNo":"0001","거래방법":"@","requestMethodCode":"","cancelYn":"","원승인번호":"","priority":"LOW"},
+  {"caseNo":"0001","응답코드":"7834","할인성공":"Y","priority":"LOW"},
+  {"caseNo":"0002","거래방법":"A","requestMethodCode":"","cancelYn":"","원승인번호":"","priority":"LOW"},
+  {"caseNo":"0002","응답코드":"0000","할인성공":"","priority":"LOW"},
+  {"caseNo":"0003","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"","원승인번호":"","priority":"LOW"},
+  {"caseNo":"0003","응답코드":"0000","할인성공":"","priority":"LOW"},
+  {"caseNo":"0004","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"","원승인번호":"","priority":"LOW"},
+  {"caseNo":"0004","응답코드":"0000","할인성공":"Y","priority":"LOW"},
+  {"caseNo":"0005","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"","원승인번호":"","priority":"LOW"},
+  {"caseNo":"0005","응답코드":"0000","할인성공":"","priority":"LOW"},
+]}
+TEST CASE END

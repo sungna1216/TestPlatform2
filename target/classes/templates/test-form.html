@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>API 테스트 시나리오 작성</title>
+  <link rel="stylesheet" href="/css/test-form.css" />
+
+  <!-- 라이브러리 -->
+  <script src="/js/lib/jquery-3.6.0.min.js"></script>
+  <script src="/js/lib/Sortable.min.js"></script>
+  <script type="module" src="/js/main/test-form-init.js"></script>
+  <script type="module" src="/js/test-form-select.js"></script>
+  <style>
+    #batchUpdateModal button {
+      font-size: 12px;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 6px;
+      background-color: #a8c5f7;
+      color: #1b1e26;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+    #batchUpdateModal button:hover {
+      background-color: #6fa7f1;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 시나리오 JSON 주입 -->
+<input type="hidden" id="scenariosJson" th:value="${scenariosJson}" />
+<div class="form-group">
+  <label>✅ 선택된 테스트 케이스 미리보기</label>
+  <pre id="testPreview"
+       style="background:#f4f4f4; border:1px solid #ccc; padding:10px; max-height:300px; overflow:auto; font-size:13px;"></pre>
+</div>
+<h1>API 테스트 시나리오 작성</h1>
+
+<form id="testForm" th:action="@{${caseId != null ? '/update/' + caseId : '/create'}}" method="post">
+  <div class="form-group">
+    <label>1. TEST CASE NAME:</label>
+    <input type="text" name="title" th:value="${form.title}" required />
+  </div>
+
+  <div class="form-group">
+    <label>2. NOTE:</label>
+    <textarea name="note" rows="5" th:text="${form.note}"></textarea>
+  </div>
+
+  <div class="form-group" th:if="${caseId != null}">
+    <label>케이스 ID:</label>
+    <input type="text" th:value="${caseId}" readonly style="width: 150px; background: #f5f5f5;" />
+  </div>
+
+  <div class="form-actions">
+    <a href="/cases" class="btn-secondary" style="text-decoration: none;">◀️ 목록으로</a>
+    <button type="button" class="btn-primary" onclick="runTest()">🚀 테스트 실행</button>
+    <button type="button" class="btn-primary" onclick="runSelectedTests()">🔍 선택 건 테스트</button>
+    <div class="form-group">
+    <label>중요도 선택 실행:</label>
+    <select id="priorityFilter" multiple size="3">
+      <option value="HIGH" selected>HIGH</option>
+      <option value="MEDIUM" selected>MEDIUM</option>
+      <option value="LOW" selected>LOW</option>
+    </select>
+    <small style="display:block; color:#888;">(복수 선택 가능, 해당 중요도를 가진 step이 자동 포함됩니다)</small>
+</div>
+
+    <input type="hidden" id="testCaseId" th:value="${caseId}" />
+    <button type="submit" class="btn-primary">💾 저장</button>
+  </div>
+
+  <div id="scenariosContainer"></div>
+
+  <div class="scenario-actions">
+    <button type="button" class="btn-primary" data-action="add-scenario">➕ 시나리오 추가</button>
+  </div>
+</form>
+
+<!-- 일괄변경 모달 -->
+<div id="batchUpdateModal" style="display:none;">
+  <div class="modal-content">
+    <h3>📌 선택 스텝 일괄 변경</h3>
+
+    <div class="form-group mode-switch">
+      <label><input type="radio" name="batchMode" value="basic" checked> 기본 모드</label>
+      <label><input type="radio" name="batchMode" value="conditional"> 조건부 모드</label>
+    </div>
+
+    <div id="basicFields" class="mode-section">
+      <div class="form-group">
+        <label>대상 키:</label>
+        <input type="text" id="modalTargetKey" placeholder="예: userId" />
+      </div>
+      <div class="form-group">
+        <label>새 값:</label>
+        <input type="text" id="modalNewValue" placeholder="새로운 값" />
+      </div>
+    </div>
+
+    <div id="conditionalFields" class="mode-section" style="display:none;">
+      <div class="form-group">
+        <label>조건 키:</label>
+        <input type="text" id="modalConditionKey" placeholder="예: status" />
+      </div>
+      <div class="form-group">
+        <label>조건 값:</label>
+        <input type="text" id="modalConditionValue" placeholder="예: 200" />
+      </div>
+      <div class="form-group">
+        <label>대상 키:</label>
+        <input type="text" id="modalTargetKeyConditional" placeholder="예: userId" />
+      </div>
+      <div class="form-group">
+        <label>새 값:</label>
+        <input type="text" id="modalNewValueConditional" placeholder="새로운 값" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" data-action="close-batch-modal">취소</button>
+      <button type="button" class="btn-primary" data-action="apply-batch-update">적용</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 테스트 실행 함수 (임시) -->
+<script>
+  function runTest() {
+    alert("테스트 실행 기능은 구현 예정입니다.");
+  }
+</script>
+<script type="module">
+  import { runSelectedTests } from '/js/test-form-select.js';
+  window.runSelectedTests = runSelectedTests;
+</script>
+</body>
+</html>

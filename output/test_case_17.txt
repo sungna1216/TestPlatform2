@@ -1,0 +1,23 @@
+1.TEST CASE NAME : TestCase
+2.NOTE
+null
+TEST CASE START : 주유소
+{"주유소":[
+  {"caseNo":"0001","거래방법":"@","requestMethodCode":"","cancelYn":"","원승인번호":"","할인여부":"","priority":"낮음"},
+  {"caseNo":"0001","응답코드":"7834","할인성공":"Y","카드구분":"","카드번호":"","priority":"낮음"},
+  {"caseNo":"0002","거래방법":"A","requestMethodCode":"","cancelYn":"","원승인번호":"","할인여부":"Y","priority":"낮음"},
+  {"caseNo":"0002","응답코드":"0000","할인성공":"","카드구분":"check","카드번호":"","priority":"낮음"},
+  {"caseNo":"0003","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"낮음"},
+  {"caseNo":"0003","응답코드":"0000","할인성공":"","카드구분":"normal","카드번호":"비씨카드","priority":"낮음"},
+  {"caseNo":"0004","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"낮음"},
+  {"caseNo":"0004","응답코드":"0000","할인성공":"Y","카드구분":"check","카드번호":"","priority":"낮음"},
+  {"caseNo":"0005","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"낮음"},
+  {"caseNo":"0005","응답코드":"0000","할인성공":"","카드구분":"","카드번호":"","priority":"낮음"},
+  {"caseNo":"0006","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"높음"},
+  {"caseNo":"0006","응답코드":"0000","할인성공":"","카드구분":"","카드번호":"","priority":"높음"},
+  {"caseNo":"0007","거래방법":"A","requestMethodCode":"requestMethodCode","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"보통"},
+  {"caseNo":"0007","응답코드":"0000","할인성공":"","카드구분":"","카드번호":"","priority":"보통"},
+  {"caseNo":"0008","거래방법":"A","requestMethodCode":"식별","cancelYn":"Y","원승인번호":"있음","할인여부":"","priority":"보통"},
+  {"caseNo":"0008","응답코드":"0000","할인성공":"","카드구분":"","카드번호":"","priority":"보통"},
+]}
+TEST CASE END

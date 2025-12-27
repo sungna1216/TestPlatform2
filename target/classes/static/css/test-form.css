@@ -1,0 +1,291 @@
+body {
+  font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 13px;
+  margin: 16px;
+  background-color: #f9fafb;
+  color: #111;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #1b1e26;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+input[type="text"],
+textarea {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  font-size: 12px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px; /* ⬅ 둥글기를 낮춤 */
+  background-color: #a8c5f7; /* ⬅ 연한 파랑 */
+  color: #1b1e26;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: background-color 0.2s;
+}
+.btn-small{
+  border-radius: 50%;
+  font-size: 1.1rem; 
+}
+button:hover {
+  background-color: #6fa7f1; /* ⬅ hover 시도 은은한 파랑 */
+}
+
+.scenario-container {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.flex-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+table {
+  border-collapse: collapse;
+  margin-top: 4px;
+  background-color: #fff;
+}
+
+table th, table td {
+  border: 1px solid #cbd5e1;
+  padding: 0;
+  text-align: center;
+  font-size: 12px;
+  min-width: 100px;
+}
+
+table th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
+table input {
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  padding: 4px;
+  border: none;                /* 🔽 셀 내부 테두리 제거 */
+  background: transparent;     /* 🔽 셀과 배경 일체화 */
+  text-align: center;
+  box-sizing: border-box;
+}
+#input-shaded {
+  border: 1px solid #ccc;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.dragging {
+      opacity: 0.5;
+      border: 2px dashed #555;
+ }
+ /* test-form.css에 추가 */
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.move-btn {
+  padding: 2px 6px;
+  margin: 0 2px;
+  background-color: #e5e7eb;
+}
+
+button.move-btn:hover:not([disabled]) {
+  background-color: #d1d5db;
+}
+
+.field-container {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.field-input-group {
+  display: flex;
+  align-items: center;
+}
+.draggable-field {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 8px;
+    padding: 4px;
+    border: 1px solid transparent;
+    cursor: grab;
+    background-color: #fff;
+    border-radius: 4px;
+}
+.draggable-field.dragging {
+    opacity: 0.5;
+    border: 1px dashed #555;
+    background-color: #f0f0f0;
+}
+.field-dropzone {
+    display: inline-block;
+    min-height: 30px;
+}
+.field-dropzone.highlight {
+    background-color: #f0f7ff;
+}
+/* test-form.css에 추가 */
+#batchUpdateModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+#batchUpdateModal > div {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#batchUpdateModal input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#batchUpdateModal button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.step-container {
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 8px;
+  cursor: grab;
+  transition: border 0.2s ease, background-color 0.2s ease;
+}
+
+.step-container.selected {
+  background-color: #e6f0ff;
+  border: 3px solid #3b82f6;
+}
+.sortable-ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+.draggable-field {
+  display: inline-block;
+  margin-right: 0px;
+  padding: 0px;
+  background: #f0f0f0;
+  border: 1px solid #fff;
+  cursor: move;
+}
+.container {
+  display: flex;            /* 좌우 배치 */
+  flex-direction: row;      /* 명확히 가로 방향 */
+  gap: 20px;                /* 간격 */
+  width: 100%;
+  box-sizing: border-box;
+}
+.step-content {
+  display: flex;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+.request-fields, .expected-fields {
+  flex: 1 1 0;
+  min-width: 200px;
+  overflow-x: auto;   /* ✅ 가로 스크롤 */
+}
+
+.request-fields table, .expected-fields table {
+  width: max-content;  /* ✅ 컬럼 수만큼 너비 확장 */
+  table-layout: auto;
+}
+
+.step-container button[data-action="remove-step"] {
+  margin-top: 5px;  /* 테이블과 여백 확보 */
+}
+/* 조건부 필드 그룹 시각적 구분 */
+#batchUpdateModal .form-group {
+    margin-bottom: 15px;
+    margin-right: 15px; /* 우측 여백 추가 */
+    margin-left: 15px; /* 좌측 여백 추가 */
+}
+/* 모드 선택 스타일링 */
+.mode-switch {
+    padding: 10px 0;
+    border-top: 1px dashed #ccc;
+    margin-top: 10px;
+}
+.mode-switch label {
+    margin-right: 15px;
+    cursor: pointer;
+}
+.mode-section {
+    transition: opacity 0.3s ease;
+}
+.mode-section.hidden {
+    display: none;
+    opacity: 0;
+}
+.mode-section.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* 중요도 셀 스타일링 */
+.priority-cell {
+  min-width: 100px;
+}
+
+.priority-select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+tr.priority-high select.priority-select {
+  background-color: #ffebee; /* 연한 빨강 */
+}
+
+tr.priority-medium select.priority-select {
+  background-color: #fff8e1; /* 연한 노랑 */
+}
+
+tr.priority-low select.priority-select {
+  background-color: #e0f7fa; /* 연한 하늘 */
+}
