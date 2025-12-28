@@ -92,7 +92,14 @@ export default function CaseEditor() {
       ...prev,
       scenarios: [...prev.scenarios, {
         scenarioName: `시나리오 ${prev.scenarios.length + 1}`,
-        steps: []
+        steps: [{
+          caseNo: '0001',
+          priority: '보통',
+          keys: ['bin', 'chkDgt', 'wcc', '금액'],
+          values: ['', '', '', ''],
+          expectedKeys: ['응답코드', '승인번호', 'NOTE'],
+          expectedValues: ['', '', '']
+        }]
       }]
     }));
   };
@@ -125,17 +132,17 @@ export default function CaseEditor() {
             caseNo: String(parseInt(s.steps[s.steps.length - 1].caseNo || '0') + 1).padStart(4, '0'),
             priority: s.steps[s.steps.length - 1].priority,
             keys: [...s.steps[s.steps.length - 1].keys],
-            values: [...s.steps[s.steps.length - 1].values],
+            values: s.steps[s.steps.length - 1].values.map(() => ''),
             expectedKeys: [...s.steps[s.steps.length - 1].expectedKeys],
-            expectedValues: [...s.steps[s.steps.length - 1].expectedValues]
+            expectedValues: s.steps[s.steps.length - 1].expectedValues.map(() => '')
           } : {
-            // 첫 스텝인 경우 기본값
+            // 첫 스텝인 경우 기본값 (시나리오 추가 시 이미 생성되므로 이 케이스는 거의 사용되지 않음)
             caseNo: '0001',
             priority: '보통',
-            keys: [''],
-            values: [''],
-            expectedKeys: [''],
-            expectedValues: ['']
+            keys: ['bin', 'chkDgt', 'wcc', '금액'],
+            values: ['', '', '', ''],
+            expectedKeys: ['응답코드', '승인번호', 'NOTE'],
+            expectedValues: ['', '', '']
           }]
         } : s
       )
@@ -442,7 +449,8 @@ export default function CaseEditor() {
                   type="text"
                   value={scenario.scenarioName}
                   onChange={(e) => updateScenarioName(sIdx, e.target.value)}
-                  className="text-xl font-bold px-3 py-1 border-b-2 border-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="text-xl font-bold px-3 py-1 border-b-2 border-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-none flex-1 min-w-[200px]"
+                  style={{width: 'auto'}}
                 />
                 <button
                   onClick={() => deleteScenario(sIdx)}
@@ -454,15 +462,15 @@ export default function CaseEditor() {
 
               {/* Steps Table */}
               <div className="overflow-x-auto border border-gray-300 rounded">
-                <table className="w-full border-collapse text-xs">
+                <table className="border-collapse text-xs" style={{width: '100%', tableLayout: 'auto'}}>
                   <thead>
                     <tr className="bg-gray-100">
                       <th className="border border-gray-300 px-1 py-1 w-10 text-xs sticky left-0 bg-gray-100 z-10">선택</th>
-                      <th className="border border-gray-300 px-1 py-1 text-xs text-center sticky left-10 bg-gray-100 z-10" style={{width: '60px', minWidth: '60px', maxWidth: '60px'}}>No</th>
-                      <th className="border border-gray-300 px-1 py-1 text-xs text-center sticky left-[70px] bg-gray-100 z-10" style={{width: '70px', minWidth: '70px', maxWidth: '70px'}}>중요도</th>
+                      <th className="border border-gray-300 px-2 py-1 text-xs text-center bg-gray-100" style={{minWidth: '50px'}}>No</th>
+                      <th className="border border-gray-300 px-2 py-1 text-xs text-center bg-gray-100" style={{minWidth: '60px'}}>중요도</th>
                       {/* Request Headers */}
                       {scenario.steps.length > 0 && scenario.steps[0].keys.map((_, idx) => (
-                        <th key={`req-${idx}`} className="border border-gray-300 px-0.5 py-1 min-w-[60px] text-xs bg-blue-50">
+                        <th key={`req-${idx}`} className="border border-gray-300 px-2 py-1 text-xs bg-blue-50">
                           <div className="flex flex-col gap-0.5">
                             <div className="flex items-center justify-center gap-0.5">
                               {idx > 0 && (
@@ -502,8 +510,9 @@ export default function CaseEditor() {
                                   )
                                 }));
                               }}
-                              className="w-full px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
+                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
                               placeholder="요청"
+                              size={Math.max(Math.ceil((scenario.steps[0].keys[idx] || '').length * 1.5) + 3, 12)}
                             />
                           </div>
                         </th>
@@ -512,7 +521,7 @@ export default function CaseEditor() {
                       <th className="border-l-4 border-gray-800 bg-gray-800 w-1 p-0"></th>
                       {/* Expected Headers */}
                       {scenario.steps.length > 0 && scenario.steps[0].expectedKeys.map((_, idx) => (
-                        <th key={`exp-${idx}`} className="border border-gray-300 px-0.5 py-1 min-w-[60px] text-xs bg-green-50">
+                        <th key={`exp-${idx}`} className="border border-gray-300 px-2 py-1 text-xs bg-green-50">
                           <div className="flex flex-col gap-0.5">
                             <div className="flex items-center justify-center gap-0.5">
                               {idx > 0 && (
@@ -552,8 +561,9 @@ export default function CaseEditor() {
                                   )
                                 }));
                               }}
-                              className="w-full px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
+                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
                               placeholder="기댓값"
+                              size={Math.max(Math.ceil((scenario.steps[0].expectedKeys[idx] || '').length * 1.5) + 3, 12)}
                             />
                           </div>
                         </th>
@@ -572,7 +582,7 @@ export default function CaseEditor() {
                             onChange={(e) => toggleStepSelection(sIdx, stIdx, e.nativeEvent.shiftKey)}
                           />
                         </td>
-                        <td className="border border-gray-300 px-0.5 py-0.5 text-center sticky left-10 bg-white z-10" style={{width: '60px', minWidth: '60px', maxWidth: '60px'}}>
+                        <td className="border border-gray-300 px-2 py-0.5 text-center" style={{minWidth: '50px'}}>
                           <input
                             type="text"
                             value={step.caseNo}
@@ -581,7 +591,7 @@ export default function CaseEditor() {
                             style={{textAlign: 'center'}}
                           />
                         </td>
-                        <td className="border border-gray-300 px-0 py-0.5 sticky left-[70px] z-10" style={{width: '70px', minWidth: '70px', maxWidth: '70px', backgroundColor: 
+                        <td className="border border-gray-300 px-1 py-0.5" style={{minWidth: '60px', backgroundColor: 
                           step.priority === '낮음' ? '#b3e5fc' : 
                           step.priority === '높음' ? '#ffcdd2' : 
                           '#fff9c4'
@@ -591,7 +601,15 @@ export default function CaseEditor() {
                             onChange={(e) => updateStep(sIdx, stIdx, 'priority', e.target.value)}
                             className="w-full h-full px-1 py-0.5 text-[11px] border-0 font-medium text-center"
                             style={{
-                              backgroundColor: 'transparent'
+                              backgroundColor: 'transparent',
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23333' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 2px center',
+                              backgroundSize: '8px 8px',
+                              paddingRight: '12px',
+                              appearance: 'none',
+                              WebkitAppearance: 'none',
+                              MozAppearance: 'none'
                             }}
                           >
                             <option value="낮음">낮음</option>
@@ -601,12 +619,13 @@ export default function CaseEditor() {
                         </td>
                         {/* Request Values */}
                         {step.values.map((val, kvIdx) => (
-                          <td key={`req-val-${kvIdx}`} className="border border-gray-300 px-1 py-0.5 bg-blue-50 min-w-[60px]">
+                          <td key={`req-val-${kvIdx}`} className="border border-gray-300 px-0.5 py-0.5">
                             <input
                               type="text"
                               value={val}
                               onChange={(e) => updateKeyValue(sIdx, stIdx, 'request', kvIdx, false, e.target.value)}
-                              className="w-full px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              size={Math.max(Math.ceil((val || '').length * 1.5) + 3, 15)}
                             />
                           </td>
                         ))}
@@ -614,12 +633,13 @@ export default function CaseEditor() {
                         <td className="border-l-4 border-gray-800 bg-gray-800 p-0"></td>
                         {/* Expected Values */}
                         {step.expectedValues.map((val, kvIdx) => (
-                          <td key={`exp-val-${kvIdx}`} className="border border-gray-300 px-1 py-0.5 bg-green-50 min-w-[60px]">
+                          <td key={`exp-val-${kvIdx}`} className="border border-gray-300 px-0.5 py-0.5">
                             <input
                               type="text"
                               value={val}
                               onChange={(e) => updateKeyValue(sIdx, stIdx, 'expected', kvIdx, false, e.target.value)}
-                              className="w-full px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              size={Math.max(Math.ceil((val || '').length * 1.5) + 3, 15)}
                             />
                           </td>
                         ))}

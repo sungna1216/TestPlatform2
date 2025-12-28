@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/cases")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 public class TestCaseRestController {
     
     private final TestCaseService testCaseService;
