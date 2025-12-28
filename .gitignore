@@ -1,1 +1,14 @@
 target/
+
+# Build output
+target/
+
+# Java class files
+**/*.class
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store

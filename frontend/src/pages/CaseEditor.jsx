@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, GripVertical, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import { testCaseApi } from '../lib/api';
 import { cn } from '../lib/utils';
 
@@ -17,6 +17,7 @@ export default function CaseEditor() {
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchMode, setBatchMode] = useState('basic'); // 'basic' or 'conditional'
   const [lastSelectedKey, setLastSelectedKey] = useState(null);
+  const [parallelExecution, setParallelExecution] = useState(true);
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -87,6 +88,93 @@ export default function CaseEditor() {
     }
   };
 
+  const handleExecuteTest = async () => {
+    if (form.scenarios.length === 0) {
+      alert('실행할 시나리오가 없습니다');
+      return;
+    }
+
+    // Check if any steps are selected
+    const selectedCount = Object.values(selectedSteps).filter(Boolean).length;
+    
+    if (selectedCount === 0) {
+      if (!confirm('선택한 케이스가 없습니다. 전체를 실행하시겠습니까?')) {
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      
+      // Convert form data to execution request format
+      const executionRequest = {
+        parallel: parallelExecution,
+        scenarios: form.scenarios.map((scenario, sIdx) => {
+          // Filter steps based on selection
+          const filteredSteps = selectedCount > 0 
+            ? scenario.steps.filter((step, stIdx) => selectedSteps[`${sIdx}-${stIdx}`])
+            : scenario.steps;
+          
+          // Skip scenario if no steps are selected
+          if (filteredSteps.length === 0) {
+            return null;
+          }
+          
+          return {
+            scenarioName: scenario.scenarioName,
+            steps: filteredSteps.map(step => ({
+              caseNo: step.caseNo,
+              priority: step.priority,
+              requestData: step.keys.reduce((acc, key, idx) => {
+                acc[key] = step.values[idx] || '';
+                return acc;
+              }, {}),
+              expectedData: step.expectedKeys.reduce((acc, key, idx) => {
+                acc[key] = step.expectedValues[idx] || '';
+                return acc;
+              }, {})
+            }))
+          };
+        }).filter(s => s !== null)
+      };
+
+      if (executionRequest.scenarios.length === 0) {
+        alert('실행할 케이스가 없습니다');
+        return;
+      }
+
+      const response = await fetch('http://localhost:8080/api/test-execution/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(executionRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start test execution');
+      }
+
+      const executionId = await response.text();
+      
+      // Navigate to result view
+      navigate('/test-result', { 
+        state: { 
+          executionId,
+          caseTitle: form.title,
+          caseNote: form.note,
+          parallelExecution
+        } 
+      });
+      
+    } catch (error) {
+      console.error('Test execution failed:', error);
+      alert('테스트 실행 실패');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addScenario = () => {
     setForm(prev => ({
       ...prev,
@@ -95,10 +183,10 @@ export default function CaseEditor() {
         steps: [{
           caseNo: '0001',
           priority: '보통',
-          keys: ['bin', 'chkDgt', 'wcc', '금액'],
-          values: ['', '', '', ''],
-          expectedKeys: ['응답코드', '승인번호', 'NOTE'],
-          expectedValues: ['', '', '']
+          keys: ['cardNo', 'settlementAmount', 'requestMethod'],
+          values: ['', '', ''],
+          expectedKeys: ['responseCode', 'approvalNo', 'responseMessage', 'discountYn'],
+          expectedValues: ['', '', '', '']
         }]
       }]
     }));
@@ -128,21 +216,21 @@ export default function CaseEditor() {
         i === sIdx ? {
           ...s,
           steps: [...s.steps, s.steps.length > 0 ? {
-            // 마지막 스텝 복사
+            // 마지막 스텝 복사 (값 포함)
             caseNo: String(parseInt(s.steps[s.steps.length - 1].caseNo || '0') + 1).padStart(4, '0'),
             priority: s.steps[s.steps.length - 1].priority,
             keys: [...s.steps[s.steps.length - 1].keys],
-            values: s.steps[s.steps.length - 1].values.map(() => ''),
+            values: [...s.steps[s.steps.length - 1].values],
             expectedKeys: [...s.steps[s.steps.length - 1].expectedKeys],
-            expectedValues: s.steps[s.steps.length - 1].expectedValues.map(() => '')
+            expectedValues: [...s.steps[s.steps.length - 1].expectedValues]
           } : {
             // 첫 스텝인 경우 기본값 (시나리오 추가 시 이미 생성되므로 이 케이스는 거의 사용되지 않음)
             caseNo: '0001',
             priority: '보통',
-            keys: ['bin', 'chkDgt', 'wcc', '금액'],
-            values: ['', '', '', ''],
-            expectedKeys: ['응답코드', '승인번호', 'NOTE'],
-            expectedValues: ['', '', '']
+            keys: ['cardNo', 'settlementAmount', 'requestMethod'],
+            values: ['', '', ''],
+            expectedKeys: ['responseCode', 'approvalNo', 'responseMessage', 'discountYn'],
+            expectedValues: ['', '', '', '']
           }]
         } : s
       )
@@ -209,6 +297,26 @@ export default function CaseEditor() {
     }));
   };
 
+  const deleteColumnFromAllSteps = (sIdx, type, kvIdx) => {
+    if (!confirm('모든 스텝에서 이 필드를 삭제하시겠습니까?')) return;
+    
+    setForm(prev => ({
+      ...prev,
+      scenarios: prev.scenarios.map((s, i) => 
+        i === sIdx ? {
+          ...s,
+          steps: s.steps.map(st => ({
+            ...st,
+            [type === 'request' ? 'keys' : 'expectedKeys']: 
+              (type === 'request' ? st.keys : st.expectedKeys).filter((_, k) => k !== kvIdx),
+            [type === 'request' ? 'values' : 'expectedValues']: 
+              (type === 'request' ? st.values : st.expectedValues).filter((_, k) => k !== kvIdx)
+          }))
+        } : s
+      )
+    }));
+  };
+
   const moveColumn = (sIdx, type, fromIdx, toIdx) => {
     setForm(prev => ({
       ...prev,
@@ -235,6 +343,22 @@ export default function CaseEditor() {
         } : s
       )
     }));
+  };
+
+  const toggleScenarioSelection = (sIdx) => {
+    const scenario = form.scenarios[sIdx];
+    if (!scenario) return;
+    
+    // 현재 시나리오의 모든 스텝이 선택되어 있는지 확인
+    const allSelected = scenario.steps.every((_, stIdx) => selectedSteps[`${sIdx}-${stIdx}`]);
+    
+    setSelectedSteps(prev => {
+      const newSelection = { ...prev };
+      scenario.steps.forEach((_, stIdx) => {
+        newSelection[`${sIdx}-${stIdx}`] = !allSelected;
+      });
+      return newSelection;
+    });
   };
 
   const toggleStepSelection = (sIdx, stIdx, shiftKey = false) => {
@@ -402,14 +526,39 @@ export default function CaseEditor() {
               {id && id !== 'new' ? '테스트 케이스 편집' : '새 테스트 케이스'}
             </h1>
           </div>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            <Save size={20} />
-            저장
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={parallelExecution}
+                  onChange={(e) => setParallelExecution(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {parallelExecution ? '병렬 실행' : '순차 실행'}
+                </span>
+              </label>
+            </div>
+            <button
+              onClick={handleExecuteTest}
+              disabled={loading || form.scenarios.length === 0}
+              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              <PlayCircle size={20} />
+              {Object.values(selectedSteps).filter(Boolean).length > 0 
+                ? `테스트 실행 (${Object.values(selectedSteps).filter(Boolean).length}개 선택)`
+                : '테스트 실행'}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              <Save size={20} />
+              저장
+            </button>
+          </div>
         </div>
 
         {/* Form - Compact */}
@@ -462,33 +611,48 @@ export default function CaseEditor() {
 
               {/* Steps Table */}
               <div className="overflow-x-auto border border-gray-300 rounded">
-                <table className="border-collapse text-xs" style={{width: '100%', tableLayout: 'auto'}}>
+                <table className="border-collapse text-sm" style={{width: '100%', tableLayout: 'auto'}}>
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className="border border-gray-300 px-1 py-1 w-10 text-xs sticky left-0 bg-gray-100 z-10">선택</th>
-                      <th className="border border-gray-300 px-2 py-1 text-xs text-center bg-gray-100" style={{minWidth: '50px'}}>No</th>
-                      <th className="border border-gray-300 px-2 py-1 text-xs text-center bg-gray-100" style={{minWidth: '60px'}}>중요도</th>
+                      <th className="border border-gray-300 px-2 py-2 w-12 text-sm sticky left-0 bg-gray-100 z-10">
+                        <input 
+                          type="checkbox" 
+                          className="cursor-pointer w-4 h-4"
+                          checked={scenario.steps.length > 0 && scenario.steps.every((_, stIdx) => selectedSteps[`${sIdx}-${stIdx}`])}
+                          onChange={() => toggleScenarioSelection(sIdx)}
+                          title="전체 선택/해제"
+                        />
+                      </th>
+                      <th className="border border-gray-300 px-3 py-2 text-sm text-center bg-gray-100" style={{minWidth: '60px'}}>No</th>
+                      <th className="border border-gray-300 px-3 py-2 text-sm text-center bg-gray-100" style={{minWidth: '80px'}}>중요도</th>
                       {/* Request Headers */}
                       {scenario.steps.length > 0 && scenario.steps[0].keys.map((_, idx) => (
-                        <th key={`req-${idx}`} className="border border-gray-300 px-2 py-1 text-xs bg-blue-50">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center justify-center gap-0.5">
+                        <th key={`req-${idx}`} className="border border-gray-300 px-2 py-2 text-sm bg-blue-50">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-center gap-1">
                               {idx > 0 && (
                                 <button
                                   onClick={() => moveColumn(sIdx, 'request', idx, idx - 1)}
-                                  className="p-0 hover:bg-blue-200 rounded"
+                                  className="p-0.5 hover:bg-blue-200 rounded"
                                   title="왼쪽으로 이동"
                                 >
-                                  <ChevronLeft size={10} />
+                                  <ChevronLeft size={14} />
                                 </button>
                               )}
+                              <button
+                                onClick={() => deleteColumnFromAllSteps(sIdx, 'request', idx)}
+                                className="p-0.5 hover:bg-red-200 rounded text-red-600"
+                                title="필드 삭제"
+                              >
+                                <Trash2 size={12} />
+                              </button>
                               {idx < scenario.steps[0].keys.length - 1 && (
                                 <button
                                   onClick={() => moveColumn(sIdx, 'request', idx, idx + 1)}
-                                  className="p-0 hover:bg-blue-200 rounded"
+                                  className="p-0.5 hover:bg-blue-200 rounded"
                                   title="오른쪽으로 이동"
                                 >
-                                  <ChevronRight size={10} />
+                                  <ChevronRight size={14} />
                                 </button>
                               )}
                             </div>
@@ -510,7 +674,7 @@ export default function CaseEditor() {
                                   )
                                 }));
                               }}
-                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
+                              className="px-2 py-1 text-xs border-0 bg-transparent font-semibold text-center"
                               placeholder="요청"
                               size={Math.max(Math.ceil((scenario.steps[0].keys[idx] || '').length * 1.5) + 3, 12)}
                             />
@@ -521,25 +685,32 @@ export default function CaseEditor() {
                       <th className="border-l-4 border-gray-800 bg-gray-800 w-1 p-0"></th>
                       {/* Expected Headers */}
                       {scenario.steps.length > 0 && scenario.steps[0].expectedKeys.map((_, idx) => (
-                        <th key={`exp-${idx}`} className="border border-gray-300 px-2 py-1 text-xs bg-green-50">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center justify-center gap-0.5">
+                        <th key={`exp-${idx}`} className="border border-gray-300 px-2 py-2 text-sm bg-green-50">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-center gap-1">
                               {idx > 0 && (
                                 <button
                                   onClick={() => moveColumn(sIdx, 'expected', idx, idx - 1)}
-                                  className="p-0 hover:bg-green-200 rounded"
+                                  className="p-0.5 hover:bg-green-200 rounded"
                                   title="왼쪽으로 이동"
                                 >
-                                  <ChevronLeft size={10} />
+                                  <ChevronLeft size={14} />
                                 </button>
                               )}
+                              <button
+                                onClick={() => deleteColumnFromAllSteps(sIdx, 'expected', idx)}
+                                className="p-0.5 hover:bg-red-200 rounded text-red-600"
+                                title="필드 삭제"
+                              >
+                                <Trash2 size={12} />
+                              </button>
                               {idx < scenario.steps[0].expectedKeys.length - 1 && (
                                 <button
                                   onClick={() => moveColumn(sIdx, 'expected', idx, idx + 1)}
-                                  className="p-0 hover:bg-green-200 rounded"
+                                  className="p-0.5 hover:bg-green-200 rounded"
                                   title="오른쪽으로 이동"
                                 >
-                                  <ChevronRight size={10} />
+                                  <ChevronRight size={14} />
                                 </button>
                               )}
                             </div>
@@ -561,37 +732,37 @@ export default function CaseEditor() {
                                   )
                                 }));
                               }}
-                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent font-semibold text-center"
+                              className="px-2 py-1 text-xs border-0 bg-transparent font-semibold text-center"
                               placeholder="기댓값"
                               size={Math.max(Math.ceil((scenario.steps[0].expectedKeys[idx] || '').length * 1.5) + 3, 12)}
                             />
                           </div>
                         </th>
                       ))}
-                      <th className="border border-gray-300 px-1 py-1 w-12 text-xs">삭제</th>
+                      <th className="border border-gray-300 px-2 py-2 w-16 text-sm">삭제</th>
                     </tr>
                   </thead>
                   <tbody>
                     {scenario.steps.map((step, stIdx) => (
                       <tr key={stIdx} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-1 py-0.5 text-center sticky left-0 bg-white z-10">
+                        <td className="border border-gray-300 px-2 py-1 text-center sticky left-0 bg-white z-10">
                           <input 
                             type="checkbox" 
-                            className="cursor-pointer w-3 h-3"
+                            className="cursor-pointer w-4 h-4"
                             checked={!!selectedSteps[`${sIdx}-${stIdx}`]}
                             onChange={(e) => toggleStepSelection(sIdx, stIdx, e.nativeEvent.shiftKey)}
                           />
                         </td>
-                        <td className="border border-gray-300 px-2 py-0.5 text-center" style={{minWidth: '50px'}}>
+                        <td className="border border-gray-300 px-3 py-1 text-center" style={{minWidth: '60px'}}>
                           <input
                             type="text"
                             value={step.caseNo}
                             onChange={(e) => updateStep(sIdx, stIdx, 'caseNo', e.target.value)}
-                            className="w-full px-0.5 py-0.5 text-[11px] border-0 text-center"
+                            className="w-full px-1 py-1 text-sm border-0 text-center"
                             style={{textAlign: 'center'}}
                           />
                         </td>
-                        <td className="border border-gray-300 px-1 py-0.5" style={{minWidth: '60px', backgroundColor: 
+                        <td className="border border-gray-300 px-2 py-1" style={{minWidth: '80px', backgroundColor: 
                           step.priority === '낮음' ? '#b3e5fc' : 
                           step.priority === '높음' ? '#ffcdd2' : 
                           '#fff9c4'
@@ -599,7 +770,7 @@ export default function CaseEditor() {
                           <select
                             value={step.priority}
                             onChange={(e) => updateStep(sIdx, stIdx, 'priority', e.target.value)}
-                            className="w-full h-full px-1 py-0.5 text-[11px] border-0 font-medium text-center"
+                            className="w-full h-full px-2 py-1 text-sm border-0 font-medium text-center"
                             style={{
                               backgroundColor: 'transparent',
                               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23333' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E")`,
@@ -619,12 +790,12 @@ export default function CaseEditor() {
                         </td>
                         {/* Request Values */}
                         {step.values.map((val, kvIdx) => (
-                          <td key={`req-val-${kvIdx}`} className="border border-gray-300 px-0.5 py-0.5">
+                          <td key={`req-val-${kvIdx}`} className="border border-gray-300 px-1 py-1">
                             <input
                               type="text"
                               value={val}
                               onChange={(e) => updateKeyValue(sIdx, stIdx, 'request', kvIdx, false, e.target.value)}
-                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              className="px-2 py-1 text-sm border-0 bg-transparent"
                               size={Math.max(Math.ceil((val || '').length * 1.5) + 3, 15)}
                             />
                           </td>
@@ -633,22 +804,22 @@ export default function CaseEditor() {
                         <td className="border-l-4 border-gray-800 bg-gray-800 p-0"></td>
                         {/* Expected Values */}
                         {step.expectedValues.map((val, kvIdx) => (
-                          <td key={`exp-val-${kvIdx}`} className="border border-gray-300 px-0.5 py-0.5">
+                          <td key={`exp-val-${kvIdx}`} className="border border-gray-300 px-1 py-1">
                             <input
                               type="text"
                               value={val}
                               onChange={(e) => updateKeyValue(sIdx, stIdx, 'expected', kvIdx, false, e.target.value)}
-                              className="px-1 py-0.5 text-[10px] border-0 bg-transparent"
+                              className="px-2 py-1 text-sm border-0 bg-transparent"
                               size={Math.max(Math.ceil((val || '').length * 1.5) + 3, 15)}
                             />
                           </td>
                         ))}
-                        <td className="border border-gray-300 px-1 py-0.5 text-center">
+                        <td className="border border-gray-300 px-2 py-1 text-center">
                           <button
                             onClick={() => deleteStep(sIdx, stIdx)}
                             className="text-red-500 hover:text-red-700"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>
